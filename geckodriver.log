@@ -1223,3 +1223,45 @@ Exiting due to channel error.
 1583726543844	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: resource://pdf.js/
 1583726543844	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: about:reader*
 [2020-03-09T04:02:24Z ERROR audio_thread_priority::rt_linux] setrlimit64: 1
+1583726545651	Marionette	INFO	Listening on port 33237
+1583726545921	Marionette	WARN	TLS certificate errors will be ignored for this session
+*** You are running in headless mode.
+*** You are running in headless mode.
+1583726553549	addons.webextension.doh-rollout@mozilla.org	WARN	Loading extension 'doh-rollout@mozilla.org': Reading manifest: Invalid extension permission: networkStatus
+1583726553816	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: mozillaAddons
+1583726553816	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: telemetry
+1583726553816	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: resource://pdf.js/
+1583726553816	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: about:reader*
+[2020-03-09T04:02:34Z ERROR audio_thread_priority::rt_linux] setrlimit64: 1
+1583726555860	Marionette	INFO	Listening on port 44429
+1583726555888	Marionette	WARN	TLS certificate errors will be ignored for this session
+*** You are running in headless mode.
+*** You are running in headless mode.
+1583726563909	addons.webextension.doh-rollout@mozilla.org	WARN	Loading extension 'doh-rollout@mozilla.org': Reading manifest: Invalid extension permission: networkStatus
+1583726564192	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: mozillaAddons
+1583726564192	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: telemetry
+1583726564193	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: resource://pdf.js/
+1583726564193	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: about:reader*
+[2020-03-09T04:02:45Z ERROR audio_thread_priority::rt_linux] setrlimit64: 1
+1583726566013	Marionette	INFO	Listening on port 33799
+1583726566325	Marionette	WARN	TLS certificate errors will be ignored for this session
+*** You are running in headless mode.
+*** You are running in headless mode.
+1583726575099	addons.webextension.doh-rollout@mozilla.org	WARN	Loading extension 'doh-rollout@mozilla.org': Reading manifest: Invalid extension permission: networkStatus
+1583726575698	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: mozillaAddons
+1583726575699	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: telemetry
+1583726575699	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: resource://pdf.js/
+1583726575700	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: about:reader*
+[2020-03-09T04:02:57Z ERROR audio_thread_priority::rt_linux] setrlimit64: 1
+1583726578516	Marionette	INFO	Listening on port 36347
+1583726578536	Marionette	WARN	TLS certificate errors will be ignored for this session
+*** You are running in headless mode.
+*** You are running in headless mode.
+1583726586581	addons.webextension.doh-rollout@mozilla.org	WARN	Loading extension 'doh-rollout@mozilla.org': Reading manifest: Invalid extension permission: networkStatus
+1583726586878	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: mozillaAddons
+1583726586878	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: telemetry
+1583726586878	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: resource://pdf.js/
+1583726586878	addons.webextension.screenshots@mozilla.org	WARN	Loading extension 'screenshots@mozilla.org': Reading manifest: Invalid extension permission: about:reader*
+[2020-03-09T04:03:07Z ERROR audio_thread_priority::rt_linux] setrlimit64: 1
+1583726591377	Marionette	INFO	Listening on port 36497
+1583726591659	Marionette	WARN	TLS certificate errors will be ignored for this session
