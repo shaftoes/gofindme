@@ -9,7 +9,7 @@ import os
 
 urlreader = csv.reader(open('./GFMURL.csv', 'r'))
 htmlwriter = csv.writer(open('./all-pages.csv','w+'))
-donationwriter = csv.writer(open('./donations-and-comments.csv','w+'))
+donationwriter = csv.writer(open('./donations.csv','w+'))
 exceptions = open('./exceptions.txt','w+')
 htmlwriter.writerow(['organizer', 'location', 'category', 'description', 'created', 'money_raised', 'goal'])
 donationwriter.writerow(['campaign','donation_id', 'amount', 'made_offline', 'is_anonymous', 'name', 'donation_date', 'profile', 'verified_user', 'comments'])
@@ -28,9 +28,9 @@ def parse_html(soup):
             goal = soup.find('h2', {'class':'m-progress-meter-heading'}).get_text()
             sofar = '0'
         pagerow = [name, location, category, description, created_date, sofar, goal]
-        comment_row = find_comments(soup)
-        print(comment_row)
-        htmlwriter.writerow(pagerow, commentrow)
+        # comment_row = find_comments(soup)
+        # print(comment_row)
+        htmlwriter.writerow(pagerow)
     except:
         exceptions.write(row[0]+" was unable to be parsed\n")
     
