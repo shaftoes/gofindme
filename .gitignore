@@ -4,3 +4,4 @@
 tmp/
 html/*
 *.csv
+.mypy_cache/*
