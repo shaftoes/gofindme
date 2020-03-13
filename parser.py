@@ -5,6 +5,8 @@ import csv
 import requests
 import time
 import os
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
 # load our csvs for input and output
 urlreader = csv.reader(open('./GFMURL.csv', 'r'))
