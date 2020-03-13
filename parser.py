@@ -20,7 +20,7 @@ donationwriter.writerow(['campaign','donation_id', 'amount', 'made_offline', 'is
 # Create our web driver to load and scrape the pages 
 options = Options()
 options.headless = True
-driver = webdriver.HtmlUnitDriver(options=options)
+driver = webdriver.Firefox(options=options)
 driver.setJavascriptEnabled(true)
 
 def parse_html(soup, url):
