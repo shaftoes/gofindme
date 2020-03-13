@@ -6,3 +6,4 @@ html/*
 *.csv
 .mypy_cache/*
 geckodriver.log
+*.txt
