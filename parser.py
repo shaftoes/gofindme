@@ -14,19 +14,28 @@ htmlwriter = csv.writer(open('./campaigns.csv','w+'))
 donationwriter = csv.writer(open('./donations.csv','w+'))
 commentswriter = csv.writer(open('./comments.csv','w+'))
 exceptions = open('./exceptions.txt','w+')
-commentswriter.writerow(['campaign', 'name', 'donation', 'comment', 'url'])
+commentswriter.writerow(['campaign', 'name', 'donation', 'comment', 'url','donors', 'shares','followers'])
 htmlwriter.writerow(['organizer', 'location', 'category', 'description', 'created', 'money_raised', 'goal', 'url'])
 donationwriter.writerow(['campaign','donation_id', 'amount', 'made_offline', 'is_anonymous', 'name', 'donation_date', 'profile', 'verified_user', 'comments', 'url'])
 # Create our web driver to load and scrape the pages 
 driver = webdriver.Firefox()
 
-def parse_html(soup, url):
+def find_campaign_info(soup, url):
     try:
         created_date = soup.find('span', {'class': 'm-campaign-byline-created'}).get_text().replace('Created ', '')
         organizer_block = soup.find('div', {'class': 'm-campaign-members-main'})
         name = organizer_block.find('div', {'class': 'm-person-info-name'}).get_text()
         location = organizer_block.find('div', {'class': 'm-person-info-content'}).get_text().replace('Organizer', '')
         category = soup.find('a', {'class': 'm-campaign-byline-type'}).get_text()
+        try:
+            fundraiser_elements = soup.find('div', {'class':'p-campaign-content'}).find_all('span', {'class':'text-stat-value'})
+            donors = fundraiser_elements[0].get_text()
+            shares = fundraiser_elements[1].get_text()
+            followers = fundraiser_elements[2].get_text()
+        except:
+            donors = "No donors"
+            followers = "No followers"
+            shares = "No shares"
         try:
             description = soup.find('div', {'class': 'o-campaign-story'}).get_text()
         except:
@@ -36,9 +45,7 @@ def parse_html(soup, url):
         except:
             goal = soup.find('h2', {'class':'m-progress-meter-heading'}).get_text()
             sofar = '0'
-        pagerow = [name, location, category, description, created_date, sofar, goal, url]
-        # comment_row = find_comments(soup)
-        # print(comment_row)
+        pagerow = [name, location, category, description, created_date, sofar, goal, url, donors, shares, followers]
         htmlwriter.writerow(pagerow)
     except:
         exceptions.write(row[0]+" was unable to be parsed\n")
@@ -61,6 +68,8 @@ def find_donations(soup, url):
         donation_list_end = jsonstring.find('}],"identity":')
         donation_string = jsonstring[donation_list_index:donation_list_end]
         donation_list = re.split("\},\{", donation_string)
+        # now we need to go through the donation list, split them each up individually
+        # then by elements 
         for donation in donation_list:
             donation_row_constructor.append(campaign_id)
             donation_row_constructor.append(campaign_title)
@@ -111,22 +120,35 @@ def find_comments(soup, url):
     except:
         exceptions.write("no comments for")
 
-for i in urlreader:
-    url = i[0]
-    driver.get(url)
-    print(url)
-    driver.execute_script("window.scrollBy(0,5000)")
-    time.sleep(1)
-    driver.execute_script("window.scrollBy(0,5000)")
-    time.sleep(1)
-    driver.execute_script("window.scrollBy(0,5000)")
-    time.sleep(1)
-    driver.execute_script("window.scrollBy(0,5000)")
-    soup = BeautifulSoup(driver.page_source, "html5lib")
-    if soup.title.get_text() != "Page Not Found":
-        parse_html(soup, url)
-        find_donations(soup, url)
-        find_comments(soup, url)
-        print(soup.title.get_text()+" loaded and scraped.")
-    else:
-        exceptions.write("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
+def load_and_parse(csv_reader):
+    for i in csv_reader:
+        url = i[0]
+        driver.get(url)
+        print(url)
+        for x in range(0, 3):
+            driver.execute_script("window.scrollBy(0,5000)")
+            time.sleep(1)
+        for x in range(0,20):
+            try:
+                morecomments = driver.find_element_by_x_path("//a[@data-element-id='btn_donate_morecomments']")
+                morecomments.click()
+                time.sleep(1)
+            except:
+                break
+        for x in range(0,20):
+            try:
+                moredonations = driver.find_element_by_x_path("//a[@data-element-id='btn_donate_moredonations']")
+                moredonations.click()
+            except:
+                break
+        soup = BeautifulSoup(driver.page_source, "html5lib")
+        if soup.title.get_text() != "Page Not Found":
+            find_campaign_info(soup, url)
+            find_donations(soup, url)
+            find_comments(soup, url)
+            print(soup.title.get_text()+" loaded and scraped.")
+        else:
+            exceptions.write("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
+
+if __name__=="__main__":
+    load_and_parse(urlreader)
