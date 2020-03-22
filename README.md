@@ -1,15 +1,18 @@
 # Loading URLs
-The scripts expect a `.csv` file named `GFMURL.csv` in the directory.
+When run on the command line, call the script with a `.csv` of URLs as your
+argument.
+
+> e.g., `python parser.py GFMURLS.csv`
 
 # Grabbing campaign info
-Run the `parser.py` script. It will grab campaign information, comment information, and donation information from scraped pages using selenium's webdriver, which automates
-loading and scraping the content of each page. This script used to be split into
-two separate scripts, but I've combined them for usability's sake. Campaigns that do not exist anymore, or have incorrect URLs, are written to `exceptions.txt`. Campaigns that have no donations are written to `exceptions.txt`. 
+The script will grab campaign information, comment information, and donation information from scraped pages using selenium's webdriver, which automates
+loading and scraping the content of each page. Campaigns that do not exist anymore, or have incorrect URLs, are written to `exceptions.txt`. Campaigns that have no donations are written to `exceptions.txt`. 
 
-# Using the selenium web automator
+# Information on using the selenium web driver
 Make sure that you have Firefox installed, as well as have followed the instructions at [Pythonspot's
 Selenium setup page](https://pythonspot.com/selenium/). Then run the script and
-don't worry if a Firefox window pops up and starts doing some stuff. 
+don't worry if a Firefox window pops up and starts doing some stuff. If you want
+to use a different browser, you can edit the code accordingly to create a new driver. 
 
 This script outputs the campaign information into `campaigns.csv`, the donation
 information into `donations.csv`, and the comments into `comments.csv`. It is currently only

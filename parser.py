@@ -2,31 +2,64 @@
 from bs4 import BeautifulSoup
 import re
 import csv
-import requests
 import time
 import os
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+import sys
 
-# load our csvs for input and output
-urlreader = csv.reader(open('./GFMURL.csv', 'r'))
+# load our csvs for input and output; exit if the user doesn't provide a .csv
+if not sys.argv[1].endswith('.csv'):
+    print('We require a .csv file of URLs, one per row, as the argument')
+    exit()
+
+urlreader = csv.reader(open(sys.argv[1], 'r'))
 htmlwriter = csv.writer(open('./campaigns.csv','w+'))
 donationwriter = csv.writer(open('./donations.csv','w+'))
 commentswriter = csv.writer(open('./comments.csv','w+'))
+<<<<<<< HEAD
+
+# next we write the headers of each file
+=======
 exceptions = open('./exceptions.txt','w+')
+>>>>>>> 55f1b18... added init
 commentswriter.writerow(['campaign', 'name', 'donation', 'comment', 'url','donors', 'shares','followers'])
 htmlwriter.writerow(['organizer', 'location', 'category', 'description', 'created', 'money_raised', 'goal', 'url'])
 donationwriter.writerow(['campaign','donation_id', 'amount', 'made_offline', 'is_anonymous', 'name', 'donation_date', 'profile', 'verified_user', 'comments', 'url'])
-# Create our web driver to load and scrape the pages 
+
+# then we initialize our web driver to load and scrape the pages
 driver = webdriver.Firefox()
 
+<<<<<<< HEAD
+# LIBRARY
 def find_campaign_info(soup, url):
+    # this finds all campaign related information and scrapes it into a csv
+=======
+def find_campaign_info(soup, url):
+>>>>>>> 55f1b18... added init
     try:
         created_date = soup.find('span', {'class': 'm-campaign-byline-created'}).get_text().replace('Created ', '')
+        category = soup.find('a', {'class': 'm-campaign-byline-type'}).get_text()
+        # name and location are in same block, so we parse that
         organizer_block = soup.find('div', {'class': 'm-campaign-members-main'})
         name = organizer_block.find('div', {'class': 'm-person-info-name'}).get_text()
         location = organizer_block.find('div', {'class': 'm-person-info-content'}).get_text().replace('Organizer', '')
-        category = soup.find('a', {'class': 'm-campaign-byline-type'}).get_text()
+        # not all campaigns have donors, so we place this in a try block
+        fundraiser_elements = soup.find('div', {'class':'p-campaign-content'}).find_all('span', {'class':'text-stat-value'})
+        # the next 3 below strings are the string values of 'text-stat-value'
+        # these are all in try blocks because some campaigns do not have them
+        try:
+            donors = fundraiser_elements[0].get_text()
+        except:
+            donors = "No donors"
+        try:
+            shares = fundraiser_elements[1].get_text()
+        except:
+            shares = "No shares"
+        try:
+            followers = fundraiser_elements[2].get_text()
+        except:
+            # what to put in if there are no values
+            followers = "No followers"
         try:
             fundraiser_elements = soup.find('div', {'class':'p-campaign-content'}).find_all('span', {'class':'text-stat-value'})
             donors = fundraiser_elements[0].get_text()
@@ -41,28 +74,35 @@ def find_campaign_info(soup, url):
         except:
             description = "No description"
         try:
+        # campaigns that have a goal but no money display the goal differently
+        # so we need a separate assignment for a 'money raised' of 0
             sofar, goal = soup.find('h2', {'class': 'm-progress-meter-heading'}).get_text().replace('goal','').split(' raised of ')
         except:
             goal = soup.find('h2', {'class':'m-progress-meter-heading'}).get_text()
             sofar = '0'
+<<<<<<< HEAD
+        # write all of these values to a row to be written to the csv
+=======
+>>>>>>> 55f1b18... added init
         pagerow = [name, location, category, description, created_date, sofar, goal, url, donors, shares, followers]
         htmlwriter.writerow(pagerow)
     except:
-        exceptions.write(row[0]+" was unable to be parsed\n")
+        # catching our exceptions onto the command line
+        print(row[0]+" was unable to be parsed\n")
 
+       
 def find_donations(soup, url):
-    # json.loads and ast.literal_eval don't work here, need to split manually
-    # this is really, really messy code becaue of the peculiarities of parsing json as a string
+    # this finds all donation-related information and scrapes it into donations.csv
+    campaign_title = soup.title.get_text()
+    # json.loads and ast.literal_eval don't work here, so we need to split manually (pythonically?)
+    # this is really, really messy code becaue of the peculiarities of parsing json as a string. If this section throws errors, then the code is out-of-date --
+    # probably due to a redesign of the website.
     try:
         jsonstring = str(soup.find_all('script')[0])
         donation_row_constructor = []
         campaign_id_index = jsonstring.find("campaign_id")+14
         campaign_id_end = jsonstring.find(',"auto_fb_post_mode":')
         campaign_id = jsonstring[campaign_id_index:campaign_id_end]
-        # then same for the title, just to have it
-        campaign_title_index = jsonstring.find("fund_name")+12
-        campaign_title_end = jsonstring.find(',"goal_amount":')
-        campaign_title = jsonstring[campaign_title_index:campaign_title_end]
         # next we find the substring that contains the list of donations
         donation_list_index = jsonstring.find("donation_id")-1
         donation_list_end = jsonstring.find('}],"identity":')
@@ -74,6 +114,7 @@ def find_donations(soup, url):
             donation_row_constructor.append(campaign_id)
             donation_row_constructor.append(campaign_title)
             donation = re.split(',', donation)
+            # we've split the donations into separate string values
             for field in donation:
                 field.replace('"', '').replace("'", '')
                 field = field.split('":')[1]
@@ -83,10 +124,11 @@ def find_donations(soup, url):
             donationwriter.writerow(donation_row_constructor)
             donation_row_constructor = []
     except:
-        exceptions.write("The campaign at "+url+" has no donations.\n")
+        print("The campaign at "+url+" has no donations.\n")
 
-
+       
 def find_comments(soup, url):
+    # this finds all comments available and scrapes them into comments.csv
     title = soup.title.get_text()
     try:
         comment_info = []
@@ -118,8 +160,53 @@ def find_comments(soup, url):
             row = []
             row.append(title)
     except:
-        exceptions.write("no comments for")
+        print("no comments for")
 
+def load_and_parse(csv_reader):
+    # main wrapper function for the scraper functions - loads the page and calls the scrapers
+    for i in csv_reader:
+        url = i[0]
+        driver.get(url)
+        for x in range(0, 3):
+        # the choice of 3 window scrolls is arbitrary, but GoFundMe won't load any
+        # more if we reach the bottom - more elements are hidden behind javascript calls
+            driver.execute_script("window.scrollBy(0,5000)")
+            time.sleep(1) # sleep to let the browser catch up
+        for x in range(0,20):
+        # we try clicking the 'show comments' button 20 times.
+        # the choice of 20 is also arbitrary, but this would load 100 comments
+            try:
+                # this click is not working right now
+                morecomments = driver.find_element_by_x_path("//a[@data-element-id='btn_donate_morecomments']")
+                morecomments.click()
+                time.sleep(1)
+            except:
+                break
+        for x in range(0,20):
+            # attempt to click the "show more" to see more donations
+            try:
+                # this click is not working right now
+                moredonations = driver.find_element_by_x_path("//a[@data-element-id='btn_donate_moredonations']")
+                moredonations.click()
+            except:
+                break
+        soup = BeautifulSoup(driver.page_source, "html5lib")
+        # load the page's source as a soup object *after* we're done clicking and loading
+        # dynamic javascript elements
+        if soup.title.get_text() != "Page Not Found":
+            # just to make sure that the page exists and we're not wasting our time
+            find_campaign_info(soup, url)
+            find_donations(soup, url)
+            find_comments(soup, url)
+            print(soup.title.get_text()+" loaded and scraped.")
+        else:
+            print("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
+
+<<<<<<< HEAD
+if __name__=="__main__":
+    # run the program
+    load_and_parse(urlreader)
+=======
 def load_and_parse(csv_reader):
     for i in csv_reader:
         url = i[0]
@@ -152,3 +239,4 @@ def load_and_parse(csv_reader):
 
 if __name__=="__main__":
     load_and_parse(urlreader)
+>>>>>>> 55f1b18... added init
