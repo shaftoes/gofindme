@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from bs4 import BeautifulSoup
+import requests
 import re
 import csv
 import time
@@ -7,35 +8,75 @@ import os
 from selenium import webdriver
 import sys
 
-# load our csvs for input and output; exit if the user doesn't provide a .csv
-if not sys.argv[1].endswith('.csv'):
-    print('We require a .csv file of URLs, one per row, as the argument')
-    exit()
+# basic usage: call the script with "search term" as an argument
 
-urlreader = csv.reader(open(sys.argv[1], 'r'))
-htmlwriter = csv.writer(open('./campaigns.csv','w+'))
-donationwriter = csv.writer(open('./donations.csv','w+'))
-commentswriter = csv.writer(open('./comments.csv','w+'))
-<<<<<<< HEAD
+# this is set up to be muted; empty items 1 and 3 are changed per requests call
+api_string = ['https://www.gofundme.com/mvc.php?route=homepage_norma/load_more&page=','','&term=','','&country=&postalCode=&locationText=']
 
-# next we write the headers of each file
-=======
-exceptions = open('./exceptions.txt','w+')
->>>>>>> 55f1b18... added init
-commentswriter.writerow(['campaign', 'name', 'donation', 'comment', 'url','donors', 'shares','followers'])
-htmlwriter.writerow(['organizer', 'location', 'category', 'description', 'created', 'money_raised', 'goal', 'url'])
-donationwriter.writerow(['campaign','donation_id', 'amount', 'made_offline', 'is_anonymous', 'name', 'donation_date', 'profile', 'verified_user', 'comments', 'url'])
+def generate_api_call(search_term, page_number):
+    api_string[1]=str(page_number)
+    api_string[3] = search_term
+    api_call = ''.join(api_string)
+    return api_call
 
-# then we initialize our web driver to load and scrape the pages
-driver = webdriver.Firefox()
+# need to load in old URLs and not go back over them
+# because the PHP api we're plugged into throws random errors at us
+# and breaks the script before it captures everything
+def load_history(csvname):
+    csvfile = open(csvname, 'r')
+    reader = csv.reader(csvfile)
+    already_scraped = list(reader)
+    csvfile.close()
+    return already_scraped
 
-<<<<<<< HEAD
-# LIBRARY
+def grab_results(search_term):
+    url_list = []
+    file_reader = './campaign_urls.csv'
+    history = load_history(file_reader)
+    campaign_url_writer = csv.writer(open('./campaign_urls.csv', 'a'))
+    main_page = requests.get('https://www.gofundme.com/mvc.php?route=homepage_norma/search&term='+search_term).text
+    main_soup = BeautifulSoup(main_page, "html5lib")
+    number_of_results = main_soup.find("div", {'class': 'heading-3'}).get_text().replace(' results found', '')
+    print(number_of_results)
+    # we can get our page number by dividing by 9 - the amount of posts on a page
+    number_of_pages = int(number_of_results) // 9
+    for i in range(1,number_of_pages):
+        time.sleep(3)
+        api_call = generate_api_call(search_term, i)
+        # call the php api and parse it
+        campaignurls = []
+        r = requests.get(api_call)
+        soup = BeautifulSoup(r.text, "html5lib")
+        campaigntiles = soup.find_all("a", {'class':'campaign-tile-img--contain'})
+        # print("Requested page "+str(i)+' and received code '+str(r.status_code)+'. There are '+str(len(campaigntiles))+" on page "+str(i))
+        if len(campaigntiles) == 0:
+            print(soup)
+            break
+        for c in campaigntiles:
+                url = c.get('href')
+                url_list.append(url)
+    print('Done search pass for '+search_term)
+    for u in url_list:
+        if u not in history:
+            campaign_url_writer.writerow(u)
+for i in range(0,100):
+    grab_results(sys.argv[1])
+
+# second set of functionaities: scraping the pages themselves
+
+def load_csv(csv):
+    urlreader = csv.reader(open(csv, 'r'))
+    htmlwriter = csv.writer(open('./campaigns.csv','w+'))
+    donationwriter = csv.writer(open('./donations.csv','w+'))
+    commentswriter = csv.writer(open('./comments.csv','w+'))
+
+    # next we write the headers of each file
+    exceptions = open('./exceptions.txt','w+')
+    commentswriter.writerow(['campaign', 'name', 'donation', 'comment', 'url','donors', 'shares','followers'])
+    htmlwriter.writerow(['organizer', 'location', 'category', 'description', 'created', 'money_raised', 'goal', 'url'])
+    donationwriter.writerow(['campaign','donation_id', 'amount', 'made_offline', 'is_anonymous', 'name', 'donation_date', 'profile', 'verified_user', 'comments', 'url'])
+
 def find_campaign_info(soup, url):
-    # this finds all campaign related information and scrapes it into a csv
-=======
-def find_campaign_info(soup, url):
->>>>>>> 55f1b18... added init
     try:
         created_date = soup.find('span', {'class': 'm-campaign-byline-created'}).get_text().replace('Created ', '')
         category = soup.find('a', {'class': 'm-campaign-byline-type'}).get_text()
@@ -80,15 +121,12 @@ def find_campaign_info(soup, url):
         except:
             goal = soup.find('h2', {'class':'m-progress-meter-heading'}).get_text()
             sofar = '0'
-<<<<<<< HEAD
         # write all of these values to a row to be written to the csv
-=======
->>>>>>> 55f1b18... added init
         pagerow = [name, location, category, description, created_date, sofar, goal, url, donors, shares, followers]
         htmlwriter.writerow(pagerow)
     except:
         # catching our exceptions onto the command line
-        print(row[0]+" was unable to be parsed\n")
+        print(url+" was unable to be parsed\n")
 
        
 def find_donations(soup, url):
@@ -163,7 +201,8 @@ def find_comments(soup, url):
         print("no comments for")
 
 def load_and_parse(csv_reader):
-    # main wrapper function for the scraper functions - loads the page and calls the scrapers
+    # main wrapper function for the scraper functions - loads the page and calls
+    # the scrapers
     for i in csv_reader:
         url = i[0]
         driver.get(url)
@@ -190,53 +229,17 @@ def load_and_parse(csv_reader):
                 moredonations.click()
             except:
                 break
-        soup = BeautifulSoup(driver.page_source, "html5lib")
         # load the page's source as a soup object *after* we're done clicking and loading
         # dynamic javascript elements
+        soup = BeautifulSoup(driver.page_source, "html5lib")
+        # just to make sure that the page exists and we're not wasting our time
         if soup.title.get_text() != "Page Not Found":
-            # just to make sure that the page exists and we're not wasting our time
             find_campaign_info(soup, url)
             find_donations(soup, url)
             find_comments(soup, url)
             print(soup.title.get_text()+" loaded and scraped.")
         else:
             print("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
-
-<<<<<<< HEAD
-if __name__=="__main__":
-    # run the program
-    load_and_parse(urlreader)
-=======
-def load_and_parse(csv_reader):
-    for i in csv_reader:
-        url = i[0]
-        driver.get(url)
-        print(url)
-        for x in range(0, 3):
-            driver.execute_script("window.scrollBy(0,5000)")
-            time.sleep(1)
-        for x in range(0,20):
-            try:
-                morecomments = driver.find_element_by_x_path("//a[@data-element-id='btn_donate_morecomments']")
-                morecomments.click()
-                time.sleep(1)
-            except:
-                break
-        for x in range(0,20):
-            try:
-                moredonations = driver.find_element_by_x_path("//a[@data-element-id='btn_donate_moredonations']")
-                moredonations.click()
-            except:
-                break
-        soup = BeautifulSoup(driver.page_source, "html5lib")
-        if soup.title.get_text() != "Page Not Found":
-            find_campaign_info(soup, url)
-            find_donations(soup, url)
-            find_comments(soup, url)
-            print(soup.title.get_text()+" loaded and scraped.")
-        else:
-            exceptions.write("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
-
-if __name__=="__main__":
-    load_and_parse(urlreader)
->>>>>>> 55f1b18... added init
+runner = False
+if runner:
+        load_and_parse(urlreader)
