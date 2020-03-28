@@ -58,9 +58,7 @@ def grab_results(search_term):
     print('Done search pass for '+search_term)
     for u in url_list:
         if u not in history:
-            campaign_url_writer.writerow(u)
-for i in range(0,100):
-    grab_results(sys.argv[1])
+            campaign_url_writer.writerow([u])
 
 # second set of functionaities: scraping the pages themselves
 
@@ -242,4 +240,9 @@ def load_and_parse(csv_reader):
             print("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
 runner = False
 if runner:
+if sys.argv[1].endswith('.csv'):
+    load_and_parse()
+
+    for i in range(0,100):
+    grab_results(sys.argv[1])
         load_and_parse(urlreader)
