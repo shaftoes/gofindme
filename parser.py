@@ -236,13 +236,15 @@ def load_and_parse(csv_reader):
             find_donations(soup, url)
             find_comments(soup, url)
             print(soup.title.get_text()+" loaded and scraped.")
+            return
         else:
             print("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
-runner = False
-if runner:
-if sys.argv[1].endswith('.csv'):
-    load_and_parse()
+            return
 
+if sys.argv[1].endswith('.csv'):
+    load_and_parse(sys.argv[1])
+
+elif type(sys.argv[1]) == str:
     for i in range(0,100):
-    grab_results(sys.argv[1])
-        load_and_parse(urlreader)
+        grab_results(sys.argv[1])
+        load_and_parse('./campaign_urls.csv')
