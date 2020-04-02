@@ -25,10 +25,16 @@ def generate_api_call(search_term, page_number):
 def initialize_db(database_name):
     database_connection = sqlite3.connect(database_name+".db")
     cursor = database_connection.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS urls(
+    url text PRIMARY KEY
+    )""")
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS campaigns(
-    url text PRIMARY KEY,
-    name text,
+    name text PRIMARY KEY,
+    url text,
     organizer text,
     location text,
     category text,
@@ -85,11 +91,11 @@ def grab_urls(search_term, database_cursor, database_connection):
         campaigntiles = soup.find_all("a", {'class':'campaign-tile-img--contain'})
         # print("Requested page "+str(i)+' and received code '+str(r.status_code)+'. There are '+str(len(campaigntiles))+" on page "+str(i))
         if len(campaigntiles) == 0:
-            print(soup.title+" has no campaigns!")
+            print("Search stopped at page "+str(i))
             break
         for c in campaigntiles:
                 url = c.get('href')
-                database_cursor.execute("""INSERT OR IGNORE INTO campaigns(url) VALUES (?)""", [url])
+                database_cursor.execute("""INSERT OR IGNORE INTO urls(url) VALUES (?)""", [url])
                 database_connection.commit()
     print('Done a search pass for '+search_term)
 
@@ -227,7 +233,7 @@ def find_comments(soup, url):
 def load_and_parse(database_cursor, database_connection):
     # main wrapper function for the scraper functions - loads the page and calls
     # the scrapers
-    urls = database_cursor.execute("""SELECT url FROM campaigns""").fetchall()
+    urls = database_cursor.execute("""SELECT url FROM urls""").fetchall()
     for url_tuple in urls:
         url = url_tuple[0]
         driver.get(url)
@@ -258,7 +264,8 @@ def load_and_parse(database_cursor, database_connection):
         # dynamic javascript elements
         soup = BeautifulSoup(driver.page_source, "html5lib")
         # just to make sure that the page exists and we're not wasting our time
-        if soup.title.get_text() != "Page Not Found":
+        try:
+            print(find_campaign_info(soup, url))
             database_cursor.execute("""INSERT OR IGNORE INTO campaigns(
             url, name, organizer, location, category, description, created, money_raised, goal, donors, shares, followers
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""", find_campaign_info(soup, url))
@@ -266,11 +273,11 @@ def load_and_parse(database_cursor, database_connection):
                 database_cursor.execute("""INSERT OR IGNORE INTO comments(campaign, url, name, donation, comment) VALUES (?,?,?,?,?,?,?,?)""", comment)
             for donation in find_donations(soup,url):
                 database_cursor.execute("""
-            INSERT OR IGNORE INTO donations(donation_id, url, campaign, amount, made_offline, is_anonymous, name, donation_date, profile, verified_user, comments) VALUES (?,?,?,?,?,?,?,?,?,?,?)""", find_donations(soup, url))
+                INSERT OR IGNORE INTO donations(donation_id, url, campaign, amount, made_offline, is_anonymous, name, donation_date, profile, verified_user, comments) VALUES (?,?,?,?,?,?,?,?,?,?,?)""", find_donations(soup, url))
             database_connection.commit()
             # print(soup.title.get_text()+" loaded and scraped.")
             continue
-        else:
+        except:
             print("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
             continue
 
