@@ -1,15 +1,12 @@
 # Loading URLs
-When run on the command line, call the script with a `.csv` of URLs as your
-argument to start pulling from the pages of those URLs.
 
-You can also ask the program to provide a search for you and pull all comments. This takes an incredibly long time because the php API used is 
+ask the program to provide a search for you and pull all comments. Give it a This takes a while
 
-> List of URLs: `python parser.py GFMURLS.csv`
 > Search term: `python parser.py “Ed the Sock”`
 
 # Grabbing campaign info
 The script will grab the description, comments, and donation information from pages using selenium's webdriver, which automates
-loading and scraping the content of each page. Pages that do not exist anymore, or have incorrect URLs, are written to `exceptions.txt`. Pages that have no donations are written to `exceptions.txt`. 
+loading and scraping the content of each page. Pages that do not exist anymore, or have incorrect URLs, are written to `exceptions.txt`. Pages that have no donations are written to `exceptions.txt`. Everything else is written to a ‘sqlite3‘ database named after the search term placed in the query. 
 
 # Information on using the selenium web driver
 Make sure that you have Firefox installed, as well as have followed the instructions at [Pythonspot's
