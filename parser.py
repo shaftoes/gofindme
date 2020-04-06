@@ -73,7 +73,33 @@ def initialize_db(database_name):
     database_connection.commit()
     return cursor, database_connection
 
-def grab_urls(search_term, database_cursor, database_connection):
+def grab_urls_selenium(search_term, driver, database_cursor, database_connection):
+    url_list = []
+    main_page = requests.get('https://www.gofundme.com/mvc.php?route=homepage_norma/search&term='+search_term).text
+    main_soup = BeautifulSoup(main_page, "html5lib")
+    number_of_results = main_soup.find("div", {'class': 'heading-3'}).get_text().replace(' results found', '')
+    # we can get our page number by dividing by 9 - the amount of posts on a page
+    number_of_pages = int(number_of_results) // 9
+    driver.get('https://www.gofundme.com/mvc.php?route=homepage_norma/search&term='+search_term)
+    for i in range(1,number_of_pages):
+        time.sleep(1)
+        # for elem in driver.find_elements_by_link_text('Show more'):
+        for elem in driver.find_elements_by_class_name("js-show-more-results"):
+            try:
+                elem.click()
+                print('Succesful click')
+            except:
+                print('Unsuccesful click')
+                break
+    soup = BeautifulSoup(driver.page_source, "html5lib")
+    campaigntiles = soup.find_all("a", {'class':'campaign-tile-img--contain'})
+    for c in campaigntiles:
+        url = c.get('href')
+        database_cursor.execute("""INSERT OR IGNORE INTO urls(url) VALUES (?)""", [url])
+        database_connection.commit()
+    print('Done a search pass for '+search_term)
+    
+def grab_urls_php(search_term, database_cursor, database_connection):
     url_list = []
     main_page = requests.get('https://www.gofundme.com/mvc.php?route=homepage_norma/search&term='+search_term).text
     main_soup = BeautifulSoup(main_page, "html5lib")
@@ -85,7 +111,6 @@ def grab_urls(search_term, database_cursor, database_connection):
         time.sleep(1)
         api_call = generate_api_call(search_term, i)
         # call the php api and parse it
-        campaignurls = []
         r = requests.get(api_call)
         soup = BeautifulSoup(r.text, "html5lib")
         campaigntiles = soup.find_all("a", {'class':'campaign-tile-img--contain'})
@@ -95,6 +120,7 @@ def grab_urls(search_term, database_cursor, database_connection):
             break
         for c in campaigntiles:
                 url = c.get('href')
+                print(url)
                 database_cursor.execute("""INSERT OR IGNORE INTO urls(url) VALUES (?)""", [url])
                 database_connection.commit()
     print('Done a search pass for '+search_term)
@@ -233,7 +259,13 @@ def find_comments(soup, url):
 def load_and_parse(database_cursor, database_connection):
     # main wrapper function for the scraper functions - loads the page and calls
     # the scrapers
-    urls = database_cursor.execute("""SELECT url FROM urls""").fetchall()
+    urls = database_cursor.execute("""
+    SELECT * FROM urls WHERE NOT EXISTS (
+    SELECT NULL
+    FROM campaigns
+    WHERE urls.url = campaigns.url
+    )""").fetchall()
+
     for url_tuple in urls:
         url = url_tuple[0]
         driver.get(url)
@@ -263,26 +295,34 @@ def load_and_parse(database_cursor, database_connection):
         # load the page's source as a soup object *after* we're done clicking and loading
         # dynamic javascript elements
         soup = BeautifulSoup(driver.page_source, "html5lib")
-        # just to make sure that the page exists and we're not wasting our time
+        # juSt to make sure that the page exists and we're not wasting our time
         try:
-            print(find_campaign_info(soup, url))
             database_cursor.execute("""INSERT OR IGNORE INTO campaigns(
             url, name, organizer, location, category, description, created, money_raised, goal, donors, shares, followers
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""", find_campaign_info(soup, url))
-            for comment in find_comments(soup,url):
+            for comment in find_comments(soup, url):
                 database_cursor.execute("""INSERT OR IGNORE INTO comments(campaign, url, name, donation, comment) VALUES (?,?,?,?,?,?,?,?)""", comment)
-            for donation in find_donations(soup,url):
+            for donation in find_donations(soup, url):
                 database_cursor.execute("""
                 INSERT OR IGNORE INTO donations(donation_id, url, campaign, amount, made_offline, is_anonymous, name, donation_date, profile, verified_user, comments) VALUES (?,?,?,?,?,?,?,?,?,?,?)""", find_donations(soup, url))
             database_connection.commit()
-            # print(soup.title.get_text()+" loaded and scraped.")
             continue
         except:
             print("The campaign at "+url+" could not be found. It's either been deleted, or the url is incorrect.\n")
             continue
 
+
 if __name__ == '__main__':
+    query = sys.argv[1]
+    passes = int(sys.argv[2])
     driver = webdriver.Firefox()
     cursor, connection = initialize_db(sys.argv[1])
-    grab_urls(sys.argv[1], cursor, connection)
+    for x in range(0,passes):
+        # try:
+        grab_urls_selenium(query, driver, cursor, connection)
+        print('success')
+        # except:
+            # pass
     load_and_parse(cursor, connection)
+    connection.commit()
+    connection.close()
