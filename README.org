@@ -25,3 +25,4 @@ Each pass of the search query will capture a maximum of 1017 campaigns. The sear
 + Configure list of pre-loaded URLs
 + Clean up regexes for campaign titles
 + Add =UPDATE= statement instead of passing over preexisting results
++ Find a static date string instead of using scraped human-readable info
