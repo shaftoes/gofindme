@@ -8,3 +8,4 @@ html/*
 geckodriver.log
 *.txt
 *.db
+*.html
