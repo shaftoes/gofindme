@@ -9,3 +9,4 @@ geckodriver.log
 *.txt
 *.db
 *.html
+tests/

@@ -23,3 +23,4 @@ Each pass of the search query will capture a maximum of 1017 campaigns. The sear
 * To do
 + Add =.csv= export backend
 + Configure list of pre-loaded URLs
++ Clean up regexes for campaign titles
