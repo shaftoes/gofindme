@@ -11,6 +11,7 @@ The script will grab the description from pages using selenium's webdriver, whic
 * Requirements
 + =selenium= web driver
 + =sqlite3= if you want to be able to view the database
++ =chromedriver= or Firefox's =gecko= driver (instructions below) 
 
 * Information on using the selenium web driver
 Make sure that you have Chromium installed (note: you can change the driver parameters in parser.py if you want to use Firefox), as well as have followed the instructions at [[https://pythonspot.com/selenium/][Pythonspot's Selenium setup page]].
