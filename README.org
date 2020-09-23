@@ -1,28 +1,26 @@
 * Usage
 There's no graphical interface to this.
 All functionality is contained in =parser.py=, so you can just run that.
-Just provide a search term as an argument, like so:
+Just provide a search term as an argument, and then the number of passes to run (5 is usually good) like so:
 
-: python parser.py “Ed the Sock”
+: python parser.py “Ed the Sock” 5
 
 * Grabbing campaign info
-The script will grab the description, comments, and donation information from pages using selenium's webdriver, which automates loading and scraping the content of each page. Pages that do not exist anymore, or have incorrect URLs, are written to `exceptions.txt`. Pages that have no donations are written to `exceptions.txt`. Everything else is written to a ‘sqlite3‘ database named after the search term placed in the query.
+The script will grab the description from pages using selenium's webdriver, which automates loading and scraping the content of each page. It first loads the search results page and grabs what information is available on each small "card" that is returned as a search result. It then runs through the entire collected database and attempts to load the pages individually in order to grab more information. There's usually pages that no longer exist anymore, in which case the program will record the date that the URL sent the scraper to a nonexistent page. Everything is written to a ‘sqlite3‘ database named after the search term placed in the query.
 
 * Requirements
 + =selenium= web driver
 + =sqlite3= if you want to be able to view the database
 
 * Information on using the selenium web driver
-Make sure that you have Firefox installed, as well as have followed the instructions at [[https://pythonspot.com/selenium/][Pythonspot's Selenium setup page]]. Then run the script and don't worry if a Firefox window pops up and starts doing some stuff. If you want to use a different browser, you can edit the code accordingly to create a new driver.
-
-This script outputs the campaign information into `campaigns.csv`, the donation information into `donations.csv`, and the comments into `comments.csv`. It is currently only capable of grabbing ten comments and five donations per campaign, but this can easily be remedied by adding a selenium instruction to click the "See More" button that appears after 10 comments have been loaded. Just haven't gotten around to adding that yet.
+Make sure that you have Chromium installed (note: you can change the driver parameters in parser.py if you want to use Firefox), as well as have followed the instructions at [[https://pythonspot.com/selenium/][Pythonspot's Selenium setup page]].
 
 * Limitations
-Each pass of the search query will capture a maximum of 1017 campaigns. The search page’s javascript does not load results past this point. The current workaround performs multiple passes.
+Each pass of the search query will capture a maximum of 1017 campaigns. The search page’s javascript does not load results past this point. The current workaround is to perform multiple passes.
 
 * To do
-+ Add =.csv= export backend
-+ Configure list of pre-loaded URLs
-+ Clean up regexes for campaign titles
-+ Add =UPDATE= statement instead of passing over preexisting results
-+ Find a static date string instead of using scraped human-readable info
+[ ] Add =.csv= export to the script as an option
+[x] Configure list of pre-loaded URLs
+[x] Clean up regexes for campaign titles
+[x] Add =UPDATE= statement instead of passing over preexisting results
+[ ] Find a static date string instead of using scraped human-readable info
