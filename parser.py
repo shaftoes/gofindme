@@ -56,7 +56,8 @@ def initialize_db(database_name):
     goal text,
     donors text,
     shares text,
-    followers text
+    followers text,
+    deleted_on text
     )""")
 
     cursor.execute("""
@@ -93,6 +94,12 @@ def initialize_db(database_name):
     database_connection.commit()
     return cursor, database_connection
 
+def scroll(driver):
+    for x in range(0, 3):
+        # the choice of 3 window scrolls is arbitrary, but GoFundMe won't load any
+        # more if we reach the bottom - more elements are hidden behind javascript calls
+        driver.execute_script("window.scrollBy(0,5000)")
+        time.sleep(0.2)  # sleep to let the browser catch up
 
 def grab_urls_php(search_term, database_cursor, database_connection):
     url_list = []
@@ -116,8 +123,7 @@ def grab_urls_php(search_term, database_cursor, database_connection):
         # call the php api and parse it
         r = requests.get(api_call)
         soup = BeautifulSoup(r.text, "html5lib")
-        campaigntiles = soup.find_all("div",
-                                      {'class': 'react-campaign-tile'})
+        campaigntiles = soup.find_all("div", {'class': 'js-fund-tile'})
         if len(campaigntiles) == 0:
             print("Search stopped at page " + str(i))
             break
@@ -125,18 +131,19 @@ def grab_urls_php(search_term, database_cursor, database_connection):
             url = (c.find("a")['href'])
             info = parse_tile(c)
             info.insert(0,url)
+            info.append(check_deleted(url))
             database_cursor.execute(
                 """INSERT OR IGNORE INTO urls(
                 url, image, title, location, description, raised, goal, deleted)
                 VALUES (?,?,?,?,?,?,?,?)""", info)
-            database_connection.commit()
+        database_connection.commit()
     print('Done a search pass for ' + search_term)
 
 
 # second set of functionaities: scraping the pages themselves
 
 def parse_tile(campaign_tile):
-    image = campaign_tile.find("a", {"class":"campaign-tile-img--contain"})['data-original']
+    image = campaign_tile.find("div", {"class":"campaign-tile-img--contain"})['data-original']
     infotile = campaign_tile.find("div",{"class":"react-campaign-tile-details"})
     title = infotile.find("div", {"class":"fund-title"}).get_text()
     location = infotile.find("div",{"class":"fund-location"}).get_text().strip()
@@ -145,8 +152,7 @@ def parse_tile(campaign_tile):
                                  ).get_text().strip().split("of")[0:2]
     raised = fundblock[0].rstrip(" raised")
     goal = fundblock[1].split(" ")[1]
-    deleted = check_deleted(campaign_tile.find("a", {"class":"campaign-tile-img--contain"})['href'])
-    return [image,title,location,description,raised,goal,deleted]
+    return [image,title,location,description,raised,goal]
 
 def check_deleted(url):
     if BeautifulSoup(requests.get(url).text,"html5lib").title.get_text() == "Page Not Found":
@@ -160,7 +166,7 @@ def find_campaign_info(soup, url):
         deletion_date = datetime.datetime.now()
         return
     else:
-        deletion_date = "exists"
+        deletion_date = None
         created_date = soup.find('span', {
             'class': 'm-campaign-byline-created'
         }).get_text().replace('Created ', '')
@@ -319,25 +325,21 @@ def load_and_parse(database_cursor, database_connection, key):
     for url_tuple in urls:
         url = url_tuple[0]
         driver.get(url)
-        for x in range(0, 3):
-            # the choice of 3 window scrolls is arbitrary, but GoFundMe won't load any
-            # more if we reach the bottom - more elements are hidden behind javascript calls
-            driver.execute_script("window.scrollBy(0,5000)")
-            time.sleep(0.2)  # sleep to let the browser catch up
+        scroll(driver)
         soup = BeautifulSoup(driver.page_source, "html5lib")
-        try:
-            campaign_info = find_campaign_info(soup, url)
-            database_cursor.execute(
-                """INSERT OR REPLACE INTO campaigns(
-            url, name, organizer, location, category, description, created, money_raised, goal, donors, shares, followers, does_exist
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?, ?)""",
-                campaign_info)
-        except:
-            print(
-                "The campaign at " + url +
-                " could not be found. It's either been deleted, or the url is incorrect.\n"
-            )
-            continue
+        # try:
+        campaign_info = find_campaign_info(soup, url)
+        database_cursor.execute(
+            """INSERT OR REPLACE INTO campaigns(
+        url, name, organizer, location, category, description, created, money_raised, goal, donors, shares, followers, deleted_on
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?, ?)""",
+            campaign_info)
+        # except:
+        #     print(
+        #         "The campaign at " + url +
+        #         " could not be found. It's either been deleted, or the url is incorrect.\n"
+        #     )
+        #     continue
         try:
             for donation in find_donations(soup, url):
                 database_cursor.execute(
@@ -369,11 +371,13 @@ if __name__ == '__main__':
     else:
         passes = 1
     cursor, connection = initialize_db(sys.argv[1])
-    for x in range(0, passes):
-        grab_urls_php(sys.argv[1], cursor, connection)
-        print('success')
-    driver = webdriver.Firefox()
-    key = sys.argv[3]
+    # for x in range(0, passes):
+    #     grab_urls_php(sys.argv[1], cursor, connection)
+    #     print('success')
+    driver = webdriver.Chrome('./chromedriver')
+    key = None
+    if (len(sys.argv) == 4):
+        key = sys.argv[3]
     load_and_parse(cursor, connection, key)
     connection.commit()
     connection.close()
